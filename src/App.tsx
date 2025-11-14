@@ -47,14 +47,14 @@ type TimeUnit = 'daily' | 'weekly' | 'monthly';
 
 function App() {
   // 입력값 state
-  const [webVisits, setWebVisits] = useState<number>(10000); // 월간 기준
-  const [mobileVisits, setMobileVisits] = useState<number>(5000); // 월간 기준
+  const [webVisits, setWebVisits] = useState<number>(0); // 월간 기준
+  const [mobileVisits, setMobileVisits] = useState<number>(0); // 월간 기준
   const [webInputUnit, setWebInputUnit] = useState<TimeUnit>('monthly');
   const [mobileInputUnit, setMobileInputUnit] = useState<TimeUnit>('monthly');
-  const [webSearchRate, setWebSearchRate] = useState<number>(0.3);
-  const [mobileSearchRate, setMobileSearchRate] = useState<number>(0.3);
-  const [webDirectionsRate, setWebDirectionsRate] = useState<number>(0.1);
-  const [mobileDirectionsRate, setMobileDirectionsRate] = useState<number>(0.1);
+  const [webSearchRate, setWebSearchRate] = useState<number>(0);
+  const [mobileSearchRate, setMobileSearchRate] = useState<number>(0);
+  const [webDirectionsRate, setWebDirectionsRate] = useState<number>(0);
+  const [mobileDirectionsRate, setMobileDirectionsRate] = useState<number>(0);
 
   // 계산 로직
   const services = useMemo((): MapApiServiceRow[] => {
@@ -338,7 +338,7 @@ function App() {
                 </div>
                 <input
                   type="text"
-                  value={webVisits ? formatNumber(Math.round(convertFromMonthly(webVisits, webInputUnit))) : ''}
+                  value={formatNumber(Math.round(convertFromMonthly(webVisits || 0, webInputUnit)))}
                   onChange={(e) => handleWebVisitsInput(e.target.value, webInputUnit)}
                   placeholder={webInputUnit === 'daily' ? '333' : webInputUnit === 'weekly' ? '2,333' : '10,000'}
                   style={{
@@ -432,7 +432,7 @@ function App() {
                 </div>
                 <input
                   type="text"
-                  value={mobileVisits ? formatNumber(Math.round(convertFromMonthly(mobileVisits, mobileInputUnit))) : ''}
+                  value={formatNumber(Math.round(convertFromMonthly(mobileVisits || 0, mobileInputUnit)))}
                   onChange={(e) => handleMobileVisitsInput(e.target.value, mobileInputUnit)}
                   placeholder={mobileInputUnit === 'daily' ? '167' : mobileInputUnit === 'weekly' ? '1,167' : '5,000'}
                   style={{
@@ -468,7 +468,7 @@ function App() {
                 </label>
                 <input
                   type="number"
-                  value={webSearchRate || ''}
+                  value={webSearchRate === 0 ? '0' : webSearchRate || ''}
                   onChange={(e) => handleNumberInput(e.target.value, setWebSearchRate)}
                   placeholder="0.3"
                   min="0"
@@ -504,7 +504,7 @@ function App() {
                 </label>
                 <input
                   type="number"
-                  value={mobileSearchRate || ''}
+                  value={mobileSearchRate === 0 ? '0' : mobileSearchRate || ''}
                   onChange={(e) => handleNumberInput(e.target.value, setMobileSearchRate)}
                   placeholder="0.3"
                   min="0"
@@ -540,7 +540,7 @@ function App() {
                 </label>
                 <input
                   type="number"
-                  value={webDirectionsRate || ''}
+                  value={webDirectionsRate === 0 ? '0' : webDirectionsRate || ''}
                   onChange={(e) => handleNumberInput(e.target.value, setWebDirectionsRate)}
                   placeholder="0.1"
                   min="0"
@@ -576,7 +576,7 @@ function App() {
                 </label>
                 <input
                   type="number"
-                  value={mobileDirectionsRate || ''}
+                  value={mobileDirectionsRate === 0 ? '0' : mobileDirectionsRate || ''}
                   onChange={(e) => handleNumberInput(e.target.value, setMobileDirectionsRate)}
                   placeholder="0.1"
                   min="0"
