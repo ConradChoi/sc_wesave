@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>위세이브(Wesave) - 네이버 지도 API 비용 계산기</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+                Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 24px;
+            background-color: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 28px 32px;
+        }
+        h1 {
+            text-align: center;
+            color: #0077c8; /* 세이브더칠드런 로고 색상 느낌 */
+            margin-top: 0;
+            margin-bottom: 24px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 4px;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box; /* 패딩 포함 크기 계산 */
+        }
+        .cost-display {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px dashed #ccc;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #total-cost {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #d90008; /* 강조 색상 */
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .cost-breakdown p {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1rem;
+            color: #555;
+            margin: 8px 0;
+        }
+        .cost-breakdown span {
+            font-weight: 600;
+            color: #000;
+        }
+        .info {
+            font-size: 0.85rem;
+            color: #777;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>위세이브(Wesave) 지도 API 예상 비용</h1>
+
+        <div class="input-group">
+            <label for="map-loads">🗺️ 월간 지도 페이지 접속 수 (Web Dynamic Map)</label>
+            <input type="number" id="map-loads" value="50000" min="0" step="1000">
+            <p class="info">월 6,000,000건 무료 / 초과 시 0.1원</p>
+        </div>
+
+        <div class="input-group">
+            <label for="geo-searches">🔍 월간 주소/장소 검색 수 (Geocoding)</label>
+            <input type="number" id="geo-searches" value="25000" min="0" step="500">
+            <p class="info">월 3,000,000건 무료 / 초과 시 0.5원</p>
+        </div>
+
+        <div class="input-group">
+            <label for="dir-clicks">🚗 월간 '길찾기' 클릭 수 (Directions 5)</label>
+            <input type="range" id="dir-slider" min="0" max="200000" value="10000" step="1000">
+            <input type="number" id="dir-clicks" value="10000" min="0" step="100">
+            <p class="info">월 60,000건 무료 / 초과 시 5원 (가장 민감한 항목)</p>
+        </div>
+
+        <div class="cost-display">
+            <h2>월간 총 예상 비용 (VAT 별도)</h2>
+            <div id="total-cost">0 원</div>
+            <div class="cost-breakdown">
+                <p>지도 표시 비용: <span id="map-cost">0 원</span></p>
+                <p>주소 검색 비용: <span id="geo-cost">0 원</span></p>
+                <p>길찾기 비용: <span id="dir-cost">0 원</span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 입력 요소(Input)와 출력 요소(Output) 선택
+        const mapInput = document.getElementById('map-loads');
+        const geoInput = document.getElementById('geo-searches');
+        const dirInput = document.getElementById('dir-clicks');
+        const dirSlider = document.getElementById('dir-slider');
+
+        const mapCostOut = document.getElementById('map-cost');
+        const geoCostOut = document.getElementById('geo-cost');
+        const dirCostOut = document.getElementById('dir-cost');
+        const totalCostOut = document.getElementById('total-cost');
+
+        // 무료 이용량 및 단가 정의
+        const FREE_TIERS = {
+            map: 6000000,
+            geo: 3000000,
+            dir: 60000
+        };
+        const RATES = {
+            map: 0.1,
+            geo: 0.5,
+            dir: 5
+        };
+
+        // 비용 계산 함수
+        function calculateCosts() {
+            // 1. 입력 값 가져오기 (숫자로 변환)
+            const mapLoads = parseInt(mapInput.value) || 0;
+            const geoSearches = parseInt(geoInput.value) || 0;
+            const dirClicks = parseInt(dirInput.value) || 0;
+
+            // 2. 무료 이용량 초과분 계산
+            const mapPayable = Math.max(0, mapLoads - FREE_TIERS.map);
+            const geoPayable = Math.max(0, geoSearches - FREE_TIERS.geo);
+            const dirPayable = Math.max(0, dirClicks - FREE_TIERS.dir);
+
+            // 3. 서비스별 비용 계산
+            const mapCost = mapPayable * RATES.map;
+            const geoCost = geoPayable * RATES.geo;
+            const dirCost = dirPayable * RATES.dir;
+
+            // 4. 총 비용 계산
+            const totalCost = mapCost + geoCost + dirCost;
+
+            // 5. 결과를 UI에 표시 (숫자 콤마 포맷)
+            mapCostOut.textContent = `${mapCost.toLocaleString('ko-KR')} 원`;
+            geoCostOut.textContent = `${geoCost.toLocaleString('ko-KR')} 원`;
+            dirCostOut.textContent = `${dirCost.toLocaleString('ko-KR')} 원`;
+            totalCostOut.textContent = `${totalCost.toLocaleString('ko-KR')} 원`;
+        }
+
+        // '길찾기' 항목의 슬라이더와 숫자 입력을 연동
+        dirSlider.addEventListener('input', () => {
+            dirInput.value = dirSlider.value;
+            calculateCosts();
+        });
+        dirInput.addEventListener('input', () => {
+            dirSlider.value = dirInput.value;
+            calculateCosts();
+        });
+
+        // 다른 입력 항목들에 대한 이벤트 리스너 추가
+        mapInput.addEventListener('input', calculateCosts);
+        geoInput.addEventListener('input', calculateCosts);
+
+        // 페이지 로드 시 초기 계산 실행
+        calculateCosts();
+    </script>
+
+</body>
+</html>
