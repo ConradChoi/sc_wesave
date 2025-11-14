@@ -43,10 +43,14 @@ interface MapApiServiceRow {
   cost: number;
 }
 
+type TimeUnit = 'daily' | 'weekly' | 'monthly';
+
 function App() {
   // 입력값 state
-  const [webVisits, setWebVisits] = useState<number>(10000);
-  const [mobileVisits, setMobileVisits] = useState<number>(5000);
+  const [webVisits, setWebVisits] = useState<number>(10000); // 월간 기준
+  const [mobileVisits, setMobileVisits] = useState<number>(5000); // 월간 기준
+  const [webInputUnit, setWebInputUnit] = useState<TimeUnit>('monthly');
+  const [mobileInputUnit, setMobileInputUnit] = useState<TimeUnit>('monthly');
   const [webSearchRate, setWebSearchRate] = useState<number>(0.3);
   const [mobileSearchRate, setMobileSearchRate] = useState<number>(0.3);
   const [webDirectionsRate, setWebDirectionsRate] = useState<number>(0.1);
@@ -152,19 +156,58 @@ function App() {
     }
   };
 
-  // 천단위 콤마가 포함된 숫자 입력 처리 함수
-  const handleFormattedNumberInput = (
-    value: string,
-    setter: (value: number) => void
-  ) => {
-    // 콤마 제거
+  // 시간 단위별 월간 값 계산
+  const convertToMonthly = (value: number, unit: TimeUnit): number => {
+    switch (unit) {
+      case 'daily':
+        return value * 30;
+      case 'weekly':
+        return value * (30 / 7);
+      case 'monthly':
+        return value;
+      default:
+        return value;
+    }
+  };
+
+  // 월간 값을 다른 단위로 변환
+  const convertFromMonthly = (monthlyValue: number, unit: TimeUnit): number => {
+    switch (unit) {
+      case 'daily':
+        return monthlyValue / 30;
+      case 'weekly':
+        return monthlyValue * 7 / 30;
+      case 'monthly':
+        return monthlyValue;
+      default:
+        return monthlyValue;
+    }
+  };
+
+  // 웹 접속 수 입력 처리 (단위 변환 포함)
+  const handleWebVisitsInput = (value: string, unit: TimeUnit) => {
     const cleanedValue = value.replace(/,/g, '');
     if (cleanedValue === '') {
-      setter(0);
+      setWebVisits(0);
     } else {
       const num = parseInt(cleanedValue, 10);
       if (!isNaN(num)) {
-        setter(num);
+        const monthlyValue = convertToMonthly(num, unit);
+        setWebVisits(monthlyValue);
+      }
+    }
+  };
+
+  // 모바일 접속 수 입력 처리 (단위 변환 포함)
+  const handleMobileVisitsInput = (value: string, unit: TimeUnit) => {
+    const cleanedValue = value.replace(/,/g, '');
+    if (cleanedValue === '') {
+      setMobileVisits(0);
+    } else {
+      const num = parseInt(cleanedValue, 10);
+      if (!isNaN(num)) {
+        const monthlyValue = convertToMonthly(num, unit);
+        setMobileVisits(monthlyValue);
       }
     }
   };
@@ -233,13 +276,71 @@ function App() {
                   fontWeight: 600,
                   color: '#333'
                 }}>
-                  월간 웹 지도 페이지 접속 수
+                  웹 지도 페이지 접속 수
                 </label>
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '8px', 
+                  marginBottom: '8px',
+                  alignItems: 'center'
+                }}>
+                  <label style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '4px',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}>
+                    <input
+                      type="radio"
+                      name="webUnit"
+                      value="daily"
+                      checked={webInputUnit === 'daily'}
+                      onChange={(e) => setWebInputUnit(e.target.value as TimeUnit)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    일간
+                  </label>
+                  <label style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '4px',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}>
+                    <input
+                      type="radio"
+                      name="webUnit"
+                      value="weekly"
+                      checked={webInputUnit === 'weekly'}
+                      onChange={(e) => setWebInputUnit(e.target.value as TimeUnit)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    주간
+                  </label>
+                  <label style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '4px',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}>
+                    <input
+                      type="radio"
+                      name="webUnit"
+                      value="monthly"
+                      checked={webInputUnit === 'monthly'}
+                      onChange={(e) => setWebInputUnit(e.target.value as TimeUnit)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    월간
+                  </label>
+                </div>
                 <input
                   type="text"
-                  value={webVisits ? formatNumber(webVisits) : ''}
-                  onChange={(e) => handleFormattedNumberInput(e.target.value, setWebVisits)}
-                  placeholder="10,000"
+                  value={webVisits ? formatNumber(Math.round(convertFromMonthly(webVisits, webInputUnit))) : ''}
+                  onChange={(e) => handleWebVisitsInput(e.target.value, webInputUnit)}
+                  placeholder={webInputUnit === 'daily' ? '333' : webInputUnit === 'weekly' ? '2,333' : '10,000'}
                   style={{
                     width: '100%',
                     padding: '10px',
@@ -249,6 +350,17 @@ function App() {
                     boxSizing: 'border-box'
                   }}
                 />
+                <div style={{ 
+                  marginTop: '4px', 
+                  fontSize: '12px', 
+                  color: '#666',
+                  display: 'flex',
+                  gap: '12px'
+                }}>
+                  <span>일간: {formatNumber(Math.round(webVisits / 30))}</span>
+                  <span>주간: {formatNumber(Math.round(webVisits * 7 / 30))}</span>
+                  <span>월간: {formatNumber(Math.round(webVisits))}</span>
+                </div>
               </div>
 
               <div>
@@ -258,13 +370,71 @@ function App() {
                   fontWeight: 600,
                   color: '#333'
                 }}>
-                  월간 모바일 지도 페이지 접속 수
+                  모바일 지도 페이지 접속 수
                 </label>
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '8px', 
+                  marginBottom: '8px',
+                  alignItems: 'center'
+                }}>
+                  <label style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '4px',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}>
+                    <input
+                      type="radio"
+                      name="mobileUnit"
+                      value="daily"
+                      checked={mobileInputUnit === 'daily'}
+                      onChange={(e) => setMobileInputUnit(e.target.value as TimeUnit)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    일간
+                  </label>
+                  <label style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '4px',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}>
+                    <input
+                      type="radio"
+                      name="mobileUnit"
+                      value="weekly"
+                      checked={mobileInputUnit === 'weekly'}
+                      onChange={(e) => setMobileInputUnit(e.target.value as TimeUnit)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    주간
+                  </label>
+                  <label style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '4px',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}>
+                    <input
+                      type="radio"
+                      name="mobileUnit"
+                      value="monthly"
+                      checked={mobileInputUnit === 'monthly'}
+                      onChange={(e) => setMobileInputUnit(e.target.value as TimeUnit)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    월간
+                  </label>
+                </div>
                 <input
                   type="text"
-                  value={mobileVisits ? formatNumber(mobileVisits) : ''}
-                  onChange={(e) => handleFormattedNumberInput(e.target.value, setMobileVisits)}
-                  placeholder="5,000"
+                  value={mobileVisits ? formatNumber(Math.round(convertFromMonthly(mobileVisits, mobileInputUnit))) : ''}
+                  onChange={(e) => handleMobileVisitsInput(e.target.value, mobileInputUnit)}
+                  placeholder={mobileInputUnit === 'daily' ? '167' : mobileInputUnit === 'weekly' ? '1,167' : '5,000'}
                   style={{
                     width: '100%',
                     padding: '10px',
@@ -274,6 +444,17 @@ function App() {
                     boxSizing: 'border-box'
                   }}
                 />
+                <div style={{ 
+                  marginTop: '4px', 
+                  fontSize: '12px', 
+                  color: '#666',
+                  display: 'flex',
+                  gap: '12px'
+                }}>
+                  <span>일간: {formatNumber(Math.round(mobileVisits / 30))}</span>
+                  <span>주간: {formatNumber(Math.round(mobileVisits * 7 / 30))}</span>
+                  <span>월간: {formatNumber(Math.round(mobileVisits))}</span>
+                </div>
               </div>
 
               <div>
