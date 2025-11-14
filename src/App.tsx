@@ -191,7 +191,7 @@ function App() {
           marginBottom: '8px',
           color: '#333'
         }}>
-          네이버 Map API 이용요금 계산기 (WESAVE / Web + Mobile)
+          네이버 Map API 이용요금 계산기
         </h1>
         <p style={{ 
           textAlign: 'center', 
