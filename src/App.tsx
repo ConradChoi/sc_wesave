@@ -45,6 +45,16 @@ interface MapApiServiceRow {
 
 type TimeUnit = 'daily' | 'weekly' | 'monthly';
 
+// 서비스별 활용 범위 설명
+const SERVICE_DESCRIPTIONS: Record<string, string> = {
+  'Dynamic Map': '위치 기반 서비스, 검색 지도, 매장 지도, 탐색 지도 등',
+  'Static Map': '상세페이지 위치 이미지, 장소 안내 이미지, 미니맵',
+  'Geocoding': '주소 -> 좌표, 주소 입력 후 지도에 핀 찍기, 장소 저장 기능',
+  'Reverse Geocoding': '좌표 -> 주소, 사용자 현재 위치 주소 표시, 지도 기반 위치 저장',
+  'Directions 5': '간단한 길찾기, 소규모 방문 경로 안내(경유지 최대 5개)',
+  'Directions 15': '영업 동선, 배달/방문 루트, 다중 지역 최적화(경유지 최대 15개)',
+};
+
 function App() {
   // 입력값 state
   const [webVisits, setWebVisits] = useState<number>(0); // 월간 기준
@@ -55,6 +65,7 @@ function App() {
   const [mobileSearchRate, setMobileSearchRate] = useState<number>(0);
   const [webDirectionsRate, setWebDirectionsRate] = useState<number>(0);
   const [mobileDirectionsRate, setMobileDirectionsRate] = useState<number>(0);
+  const [selectedService, setSelectedService] = useState<string | null>(null);
 
   // 계산 로직
   const services = useMemo((): MapApiServiceRow[] => {
@@ -684,7 +695,23 @@ function App() {
                         border: '1px solid #ddd',
                         fontWeight: 600
                       }}>
-                        {service.name}
+                        <span
+                          onClick={() => setSelectedService(service.name)}
+                          style={{
+                            cursor: 'pointer',
+                            color: '#0077c8',
+                            textDecoration: 'underline',
+                            textDecorationColor: '#0077c8'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#005a9e';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = '#0077c8';
+                          }}
+                        >
+                          {service.name}
+                        </span>
                       </td>
                       <td style={{ 
                         padding: '12px', 
@@ -743,7 +770,8 @@ function App() {
             <div style={{ 
               backgroundColor: '#f9f9f9',
               padding: '16px',
-              borderRadius: '4px'
+              borderRadius: '4px',
+              marginBottom: '32px'
             }}>
               <p style={{ margin: '8px 0', fontSize: '16px', color: '#333' }}>
                 총 월간 지도 페이지 접속 수 (웹+모바일): <strong>{formatNumber(totalVisits)}</strong> 회
@@ -752,9 +780,264 @@ function App() {
                 총 월 예상 요금: <strong style={{ color: '#d90008', fontSize: '20px' }}>{formatCurrency(totalCost)}</strong>
               </p>
             </div>
+
+            {/* 네이버 MAP API 호출 기준 표 */}
+            <h2 style={{ 
+              marginTop: '32px', 
+              marginBottom: '16px',
+              fontSize: '18px',
+              color: '#333',
+              borderBottom: '2px solid #eee',
+              paddingBottom: '8px'
+            }}>
+              네이버 MAP API 호출 기준
+            </h2>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                fontSize: '14px'
+              }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f0f0f0' }}>
+                    <th style={{ 
+                      padding: '12px', 
+                      textAlign: 'left', 
+                      border: '1px solid #ddd',
+                      fontWeight: 600,
+                      width: '60%'
+                    }}>
+                      사용자 행동
+                    </th>
+                    <th style={{ 
+                      padding: '12px', 
+                      textAlign: 'center', 
+                      border: '1px solid #ddd',
+                      fontWeight: 600,
+                      width: '40%'
+                    }}>
+                      API 호출(과금) 여부
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ backgroundColor: '#ffffff' }}>
+                    <td style={{ 
+                      padding: '12px', 
+                      border: '1px solid #ddd'
+                    }}>
+                      지도페이지 첫 접속
+                    </td>
+                    <td style={{ 
+                      padding: '12px', 
+                      textAlign: 'center', 
+                      border: '1px solid #ddd',
+                      fontWeight: 600,
+                      color: '#0077c8'
+                    }}>
+                      O(1회)
+                    </td>
+                  </tr>
+                  <tr style={{ backgroundColor: '#fafafa' }}>
+                    <td style={{ 
+                      padding: '12px', 
+                      border: '1px solid #ddd'
+                    }}>
+                      지도 확대/축소
+                    </td>
+                    <td style={{ 
+                      padding: '12px', 
+                      textAlign: 'center', 
+                      border: '1px solid #ddd',
+                      fontWeight: 600,
+                      color: '#d90008'
+                    }}>
+                      X
+                    </td>
+                  </tr>
+                  <tr style={{ backgroundColor: '#ffffff' }}>
+                    <td style={{ 
+                      padding: '12px', 
+                      border: '1px solid #ddd'
+                    }}>
+                      지도 이동(Pan)
+                    </td>
+                    <td style={{ 
+                      padding: '12px', 
+                      textAlign: 'center', 
+                      border: '1px solid #ddd',
+                      fontWeight: 600,
+                      color: '#d90008'
+                    }}>
+                      X
+                    </td>
+                  </tr>
+                  <tr style={{ backgroundColor: '#fafafa' }}>
+                    <td style={{ 
+                      padding: '12px', 
+                      border: '1px solid #ddd'
+                    }}>
+                      주소/장소 검색 버튼 클릭
+                    </td>
+                    <td style={{ 
+                      padding: '12px', 
+                      textAlign: 'center', 
+                      border: '1px solid #ddd',
+                      fontWeight: 600,
+                      color: '#0077c8'
+                    }}>
+                      O(요청당 1회)
+                    </td>
+                  </tr>
+                  <tr style={{ backgroundColor: '#ffffff' }}>
+                    <td style={{ 
+                      padding: '12px', 
+                      border: '1px solid #ddd'
+                    }}>
+                      '길찾기' 버튼
+                    </td>
+                    <td style={{ 
+                      padding: '12px', 
+                      textAlign: 'center', 
+                      border: '1px solid #ddd',
+                      fontWeight: 600,
+                      color: '#0077c8'
+                    }}>
+                      O(요청당 1회)
+                    </td>
+                  </tr>
+                  <tr style={{ backgroundColor: '#fafafa' }}>
+                    <td style={{ 
+                      padding: '12px', 
+                      border: '1px solid #ddd'
+                    }}>
+                      '길찾기' 옵션 변경
+                    </td>
+                    <td style={{ 
+                      padding: '12px', 
+                      textAlign: 'center', 
+                      border: '1px solid #ddd',
+                      fontWeight: 600,
+                      color: '#0077c8'
+                    }}>
+                      O(새로 요청 시)
+                    </td>
+                  </tr>
+                  <tr style={{ backgroundColor: '#ffffff' }}>
+                    <td style={{ 
+                      padding: '12px', 
+                      border: '1px solid #ddd'
+                    }}>
+                      DB에 저장된 매장 마커
+                    </td>
+                    <td style={{ 
+                      padding: '12px', 
+                      textAlign: 'center', 
+                      border: '1px solid #ddd',
+                      fontWeight: 600,
+                      color: '#d90008'
+                    }}>
+                      X
+                    </td>
+                  </tr>
+                  <tr style={{ backgroundColor: '#fafafa' }}>
+                    <td style={{ 
+                      padding: '12px', 
+                      border: '1px solid #ddd'
+                    }}>
+                      마커 클릭(정보창 표시)
+                    </td>
+                    <td style={{ 
+                      padding: '12px', 
+                      textAlign: 'center', 
+                      border: '1px solid #ddd',
+                      fontWeight: 600,
+                      color: '#d90008'
+                    }}>
+                      X
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* 팝업 모달 */}
+      {selectedService && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => setSelectedService(null)}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              padding: '32px',
+              borderRadius: '8px',
+              maxWidth: '500px',
+              width: '90%',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{
+                margin: 0,
+                fontSize: '20px',
+                color: '#333',
+                fontWeight: 600
+              }}>
+                {selectedService}
+              </h3>
+              <button
+                onClick={() => setSelectedService(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div style={{
+              fontSize: '16px',
+              color: '#555',
+              lineHeight: '1.6'
+            }}>
+              <strong style={{ color: '#333' }}>활용 범위:</strong>
+              <p style={{ margin: '12px 0 0 0' }}>
+                {SERVICE_DESCRIPTIONS[selectedService] || '설명이 없습니다.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
