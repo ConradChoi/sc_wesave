@@ -254,7 +254,6 @@ function Editor() {
           }}>
             {activeTab === 'tinymce' && (
               <TinyMCEEditor
-                apiKey={import.meta.env.VITE_TINYMCE_API_KEY || "p9097tnk96npipnzr0amz38tz8bdsmbhpct6x99200f5gpi3"}
                 init={{
                   height: 500,
                   menubar: true,
