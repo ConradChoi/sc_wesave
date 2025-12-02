@@ -254,6 +254,7 @@ function Editor() {
           }}>
             {activeTab === 'tinymce' && (
               <TinyMCEEditor
+                apiKey={import.meta.env.VITE_TINYMCE_API_KEY || "p9097tnk96npipnzr0amz38tz8bdsmbhpct6x99200f5gpi3"}
                 init={{
                   height: 500,
                   menubar: true,
@@ -266,8 +267,7 @@ function Editor() {
                     'bold italic forecolor | alignleft aligncenter ' +
                     'alignright alignjustify | bullist numlist outdent indent | ' +
                     'removeformat | help',
-                  language: 'ko-KR',
-                  license_key: 'gpl'
+                  language: 'ko-KR'
                 }}
                 onEditorChange={(content: string) => {
                   setPreviewContent(content);
