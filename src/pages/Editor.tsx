@@ -29,6 +29,7 @@ function Editor() {
   const [ckEditorLoaded, setCkEditorLoaded] = useState(false);
   const [quillMounted, setQuillMounted] = useState(false);
   const [previewContent, setPreviewContent] = useState<string>('');
+  const [showPreview, setShowPreview] = useState<boolean>(false);
   const summernoteRef = useRef<HTMLDivElement>(null);
   const toastEditorRef = useRef<ToastUIEditor>(null);
   const ckEditorInstanceRef = useRef<any>(null);
@@ -272,6 +273,36 @@ function Editor() {
           flexDirection: 'column',
           gap: '16px'
         }}>
+          {/* 미리보기 버튼 */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            marginBottom: '-8px'
+          }}>
+            <button
+              onClick={() => setShowPreview(true)}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#0077c8',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#005a9e';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#0077c8';
+              }}
+            >
+              미리보기
+            </button>
+          </div>
+          
           <div style={{
             border: '1px solid #ddd',
             borderRadius: '4px',
@@ -294,7 +325,15 @@ function Editor() {
                     'bold italic forecolor | alignleft aligncenter ' +
                     'alignright alignjustify | bullist numlist outdent indent | ' +
                     'removeformat | help',
-                  language: 'ko-KR'
+                  language: 'ko-KR',
+                  setup: (editor: any) => {
+                    editor.on('init', () => {
+                      const initialContent = editor.getContent();
+                      if (initialContent) {
+                        setPreviewContent(initialContent);
+                      }
+                    });
+                  }
                 }}
                 onEditorChange={(content: string) => {
                   setPreviewContent(content);
@@ -464,37 +503,100 @@ function Editor() {
             )}
           </div>
 
-          {/* 미리보기 영역 */}
-          {previewContent && (
-            <div style={{
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              padding: '16px',
-              backgroundColor: '#fafafa'
-            }}>
-              <h3 style={{
-                marginTop: 0,
-                marginBottom: '16px',
-                fontSize: '18px',
-                color: '#333',
+        </div>
+        
+        {/* 미리보기 팝업 */}
+        {showPreview && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 1000
+            }}
+            onClick={() => setShowPreview(false)}
+          >
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '8px',
+                padding: '24px',
+                maxWidth: '90%',
+                maxHeight: '90%',
+                width: '800px',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px',
                 borderBottom: '2px solid #eee',
-                paddingBottom: '8px'
+                paddingBottom: '12px'
               }}>
-                미리보기
-              </h3>
+                <h3 style={{
+                  margin: 0,
+                  fontSize: '20px',
+                  color: '#333',
+                  fontWeight: 600
+                }}>
+                  {(() => {
+                    const currentTab = tabs.find(tab => tab.id === activeTab);
+                    return currentTab ? `${currentTab.name} 미리보기` : '미리보기';
+                  })()}
+                </h3>
+                <button
+                  onClick={() => setShowPreview(false)}
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    fontSize: '24px',
+                    color: '#666',
+                    cursor: 'pointer',
+                    padding: '0',
+                    width: '30px',
+                    height: '30px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '4px',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f0f0f0';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  ×
+                </button>
+              </div>
               <div
                 style={{
-                  minHeight: '200px',
-                  padding: '16px',
-                  backgroundColor: '#ffffff',
+                  overflow: 'auto',
+                  padding: '20px',
+                  backgroundColor: '#fafafa',
                   borderRadius: '4px',
-                  border: '1px solid #e0e0e0'
+                  border: '1px solid #e0e0e0',
+                  minHeight: '300px',
+                  maxHeight: 'calc(90vh - 150px)'
                 }}
-                dangerouslySetInnerHTML={{ __html: previewContent }}
+                dangerouslySetInnerHTML={{ __html: previewContent || '<p style="color: #999; text-align: center;">에디터에 내용을 입력하면 미리보기가 표시됩니다.</p>' }}
               />
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
