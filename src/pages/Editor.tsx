@@ -62,13 +62,18 @@ function Editor() {
 
   // Summernote 초기화 및 cleanup
   useEffect(() => {
-    // 먼저 cleanup 수행 (다른 탭으로 전환 시)
-    if (activeTab !== 'summernote' && summernoteRef.current) {
-      const $editor = $(summernoteRef.current);
-      try {
-        // 모든 가능한 Summernote 인스턴스 제거
-        const $noteEditors = $editor.find('.note-editor');
-        if ($noteEditors.length > 0) {
+    // cleanup 함수: 다른 탭으로 전환 시 Summernote 완전히 제거
+    const cleanupSummernote = () => {
+      if (summernoteRef.current) {
+        const $editor = $(summernoteRef.current);
+        try {
+          // 모든 Summernote 관련 요소 찾기
+          const $noteEditors = $editor.find('.note-editor');
+          const $noteToolbar = $editor.find('.note-toolbar');
+          const $noteEditable = $editor.find('.note-editable');
+          const $noteStatusbar = $editor.find('.note-statusbar');
+          
+          // 모든 Summernote 인스턴스 제거
           $noteEditors.each(function() {
             try {
               ($(this) as any).summernote('destroy');
@@ -76,25 +81,47 @@ function Editor() {
               // 무시
             }
           });
-        }
-        // 직접 초기화된 경우
-        if ($editor.hasClass('note-editor') || $editor.data('summernote')) {
-          try {
-            ($editor as any).summernote('destroy');
-          } catch (e) {
-            // 무시
+          
+          // 직접 초기화된 경우
+          if ($editor.hasClass('note-editor') || $editor.data('summernote')) {
+            try {
+              ($editor as any).summernote('destroy');
+            } catch (e) {
+              // 무시
+            }
+          }
+          
+          // DOM 완전히 정리
+          $editor.empty();
+          $editor.removeClass('note-editor note-air-editor');
+          $editor.removeData('summernote');
+          $editor.removeAttr('data-summernote');
+          
+          // Summernote가 생성한 모든 하위 요소 제거
+          $noteToolbar.remove();
+          $noteEditable.remove();
+          $noteStatusbar.remove();
+          
+          // 전역 Summernote 이벤트 리스너 제거 시도
+          $(document).off('summernote');
+          $(window).off('summernote');
+        } catch (error) {
+          console.log('Summernote cleanup 중 에러 (무시):', error);
+          // 강제로 DOM 정리
+          if ($editor) {
+            $editor.empty();
+            $editor.removeClass('note-editor note-air-editor');
+            $editor.removeData('summernote');
+            $editor.removeAttr('data-summernote');
           }
         }
-        // DOM 완전히 정리
-        $editor.empty();
-        $editor.removeClass('note-editor');
-        $editor.removeData('summernote');
-      } catch (error) {
-        console.log('Summernote 제거 중 에러 (무시):', error);
-        // 강제로 DOM 정리
-        $editor.empty();
-        $editor.removeClass('note-editor');
       }
+    };
+    
+    // 다른 탭으로 전환 시 즉시 cleanup
+    if (activeTab !== 'summernote') {
+      cleanupSummernote();
+      return;
     }
     
     // Summernote 탭이 활성화된 경우에만 초기화
@@ -129,43 +156,15 @@ function Editor() {
         
         return () => {
           clearTimeout(timeoutId);
+          // 컴포넌트 언마운트 시 cleanup
+          cleanupSummernote();
         };
       }
     }
     
-    // 탭 전환 시 미리보기 초기화는 각 에디터의 onChange에서 처리
-    
     // cleanup 함수
     return () => {
-      if (summernoteRef.current && activeTab !== 'summernote') {
-        const $editor = $(summernoteRef.current);
-        try {
-          // 모든 Summernote 인스턴스 찾아서 제거
-          const $noteEditors = $editor.find('.note-editor');
-          $noteEditors.each(function() {
-            try {
-              ($(this) as any).summernote('destroy');
-            } catch (e) {
-              // 무시
-            }
-          });
-          // 직접 초기화된 경우
-          if ($editor.hasClass('note-editor') || $editor.data('summernote')) {
-            try {
-              ($editor as any).summernote('destroy');
-            } catch (e) {
-              // 무시
-            }
-          }
-        } catch (error) {
-          // 무시
-        } finally {
-          // 강제로 DOM 정리
-          $editor.empty();
-          $editor.removeClass('note-editor');
-          $editor.removeData('summernote');
-        }
-      }
+      cleanupSummernote();
     };
   }, [activeTab]);
 
@@ -430,12 +429,12 @@ function Editor() {
               </div>
             )}
 
-            {activeTab === 'summernote' && (
+            {activeTab === 'summernote' ? (
               <div
                 ref={summernoteRef}
                 style={{ minHeight: '400px' }}
               />
-            )}
+            ) : null}
             
             {activeTab !== 'tinymce' && 
              activeTab !== 'ckeditor-license' &&
