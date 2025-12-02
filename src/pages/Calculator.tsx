@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 
 // 서비스별 상수 정의
 const SERVICES_CONFIG = {
@@ -55,7 +56,7 @@ const SERVICE_DESCRIPTIONS: Record<string, string> = {
   'Directions 15': '영업 동선, 배달/방문 루트, 다중 지역 최적화(경유지 최대 15개)',
 };
 
-function App() {
+function Calculator() {
   // 입력값 state
   const [webVisits, setWebVisits] = useState<number>(0); // 월간 기준
   const [mobileVisits, setMobileVisits] = useState<number>(0); // 월간 기준
@@ -238,6 +239,30 @@ function App() {
         borderRadius: '8px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}>
+        <Link
+          to="/"
+          style={{
+            display: 'inline-block',
+            marginBottom: '16px',
+            padding: '8px 16px',
+            backgroundColor: '#f5f5f5',
+            color: '#333',
+            textDecoration: 'none',
+            borderRadius: '4px',
+            fontSize: '14px',
+            fontWeight: 500,
+            transition: 'background-color 0.2s',
+            cursor: 'pointer'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#e0e0e0';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#f5f5f5';
+          }}
+        >
+          ← 뒤로가기
+        </Link>
         {/* 페이지 상단 */}
         <h1 style={{ 
           textAlign: 'center', 
@@ -245,7 +270,7 @@ function App() {
           marginBottom: '8px',
           color: '#333'
         }}>
-          네이버 Map API 이용요금 계산기
+          네이버 Map API 이용요금 계산기 (WESAVE / Web + Mobile)
         </h1>
         <p style={{ 
           textAlign: 'center', 
@@ -1042,5 +1067,5 @@ function App() {
   );
 }
 
-export default App;
+export default Calculator;
 
