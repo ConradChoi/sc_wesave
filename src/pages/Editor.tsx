@@ -9,6 +9,17 @@ import $ from 'jquery';
 import 'summernote/dist/summernote-lite.min.css';
 import 'summernote/dist/summernote-lite.min.js';
 
+// ReactQuill의 findDOMNode 경고 필터링 (개발 환경에서만)
+if (import.meta.env.DEV) {
+  const originalWarn = console.warn;
+  console.warn = (...args: any[]) => {
+    if (args[0]?.includes?.('findDOMNode') || args[0]?.includes?.('findDOMNode')) {
+      return; // findDOMNode 경고 무시
+    }
+    originalWarn.apply(console, args);
+  };
+}
+
 // CKEditor 5는 동적 import로 처리
 let CKEditorComponent: any = null;
 let ClassicEditorBuild: any = null;
@@ -16,6 +27,7 @@ let ClassicEditorBuild: any = null;
 function Editor() {
   const [activeTab, setActiveTab] = useState<string>('tinymce');
   const [ckEditorLoaded, setCkEditorLoaded] = useState(false);
+  const [quillMounted, setQuillMounted] = useState(false);
   const [previewContent, setPreviewContent] = useState<string>('');
   const summernoteRef = useRef<HTMLDivElement>(null);
   const toastEditorRef = useRef<ToastUIEditor>(null);
@@ -37,6 +49,16 @@ function Editor() {
       });
     }
   }, [activeTab, ckEditorLoaded]);
+
+  // ReactQuill 동적 마운트/언마운트
+  useEffect(() => {
+    if (activeTab === 'quill' && !quillMounted) {
+      setQuillMounted(true);
+    } else if (activeTab !== 'quill' && quillMounted) {
+      // Quill 탭이 아닐 때 언마운트
+      setQuillMounted(false);
+    }
+  }, [activeTab, quillMounted]);
 
   // Summernote 초기화 및 cleanup
   useEffect(() => {
@@ -391,7 +413,7 @@ function Editor() {
               />
             )}
 
-            {activeTab === 'quill' && (
+            {activeTab === 'quill' && quillMounted && (
               <ReactQuill
                 ref={quillRef}
                 theme="snow"
@@ -401,6 +423,11 @@ function Editor() {
                   setPreviewContent(editor.getHTML());
                 }}
               />
+            )}
+            {activeTab === 'quill' && !quillMounted && (
+              <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>
+                Quill 에디터를 로딩 중...
+              </div>
             )}
 
             {activeTab === 'summernote' && (
